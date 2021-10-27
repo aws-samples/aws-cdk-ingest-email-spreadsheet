@@ -81,7 +81,6 @@ Update this part in cdk.json to customize it for your solution:
        "SES_RECIPIENT": "email_you_own@server.com",
        "ACCEPTED_SENDERS": "trusted_emails@server.com,emailtest2@email.com"
      }
-   }
 ````
 *   **GLUE_DATABASE_NAME**: The glue database name that the AWS CDK will create;
 *   **S3_PREFIX_RAW**:  the S3 prefix that will store your RAW emails;

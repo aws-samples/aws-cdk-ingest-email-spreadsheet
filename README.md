@@ -1,6 +1,6 @@
-## Build and automate your email spreadsheets ingestion using AWS CDK!
+## Build and automate your email spreadsheets ingestion using AWS CDK
 
-This post will show you how you can deploy a fully serverless architecture that ingest spreadsheets automatically from emails, runs validation rules on the data, then make them available to query in Amazon Athena and visualization in Amazon Quicksight.
+This repository will help you deploy a fully serverless architecture that ingest spreadsheets automatically from emails, runs validation rules on the data, and make them available to query in Amazon Athena and visualization in Amazon Quicksight.
 
 The solution uses:
 * AWS CDK for Infrastructure as Code, 

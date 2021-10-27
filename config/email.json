@@ -1,0 +1,8 @@
+{
+  "GLUE_DATABASE_NAME": "database_email_integration",
+  "S3_PREFIX_RAW": "tooling",
+  "S3_PREFIX_QUARANTINE": "quarantine_email",
+  "S3_PREFIX_CURATED": "curated_emails",
+  "SES_RECIPIENT": "email_you_own@server.com",
+  "ACCEPTED_SENDERS": "trusted_emails@server.com,emailtest2@email.com"
+}

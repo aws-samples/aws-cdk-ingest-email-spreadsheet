@@ -1,0 +1,7 @@
+pandas
+mail-parser
+openpyxl
+xlrd
+python-slugify
+awswrangler
+requests

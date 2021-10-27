@@ -1,0 +1,19 @@
+{
+  "app": "python app.py",
+   "context": {
+     "@aws-cdk/core:enableStackNameDuplicates": "true",
+     "aws-cdk:enableDiffNoFail": "true",
+     "@aws-cdk/core:newStyleStackSynthesis": true,
+     "@aws-cdk/aws-ecr-assets:dockerIgnoreSupport": true,
+     "IngestEmailConfiguration": {
+       "GLUE_DATABASE_NAME": "database_email_integration",
+       "S3_PREFIX_RAW": "tooling",
+       "S3_PREFIX_QUARANTINE": "quarantine_email",
+       "S3_PREFIX_CURATED": "curated_emails",
+       "SES_RECIPIENT": "email_you_own@server.com",
+       "ACCEPTED_SENDERS": "trusted_emails@server.com,emailtest2@email.com",
+       "CONFIG_PARSER_KEY": "config/email.json",
+       "OPS_TEAM_EMAIL": "foo@bar.com"
+     }
+   }
+   }

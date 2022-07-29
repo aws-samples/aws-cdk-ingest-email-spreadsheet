@@ -24,7 +24,7 @@ Pre-requisites:
 * An AWS profile with permissions to create the needed resources (see diagram below)
 * AWS CLI, authenticated and configured
 * Python 3.6+
-* AWS CDK
+* AWS CDK v2.10.0
 * Git
 * Bootstrapped AWS Account for AWS CDK - https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html
 

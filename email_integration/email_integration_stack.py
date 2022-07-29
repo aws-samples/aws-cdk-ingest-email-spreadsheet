@@ -10,18 +10,22 @@ from aws_cdk import (
     aws_iam as iam,
     aws_s3_deployment as s3deploy,
     aws_lambda as lambda_,
+    aws_ecs as ecs,
     aws_lakeformation as lakeformation,
     aws_sns_subscriptions as subscriptions,
-    core
+    Duration,
+    Aws,
+    Stack
 )
+from constructs import Construct
 
 
-class EmailIntegrationStack(core.Stack):
+class EmailIntegrationStack(Stack):
 
-    def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         ingest_configuration = self.node.try_get_context('IngestEmailConfiguration')
-        DATALAKE_ACCOUNT = core.Aws.ACCOUNT_ID
+        DATALAKE_ACCOUNT = Aws.ACCOUNT_ID
         GLUE_DATABASE_NAME = ingest_configuration.get('GLUE_DATABASE_NAME')
         S3_PREFIX_RAW = ingest_configuration.get('S3_PREFIX_RAW')
         S3_PREFIX_QUARANTINE = ingest_configuration.get('S3_PREFIX_QUARANTINE')
@@ -51,10 +55,11 @@ class EmailIntegrationStack(core.Stack):
         email_filtering_function = lambda_.DockerImageFunction(
             self,
             "email_filtering",
-            function_name=f"email_filtering_{core.Aws.ACCOUNT_ID}",
+            function_name=f"email_filtering_{Aws.ACCOUNT_ID}",
             description="Email filter",
-            code=lambda_.DockerImageCode.from_image_asset("./src/lambdas", cmd=["email_filtering.lambda_handler"]),
-            timeout=core.Duration.seconds(30),
+            code=lambda_.DockerImageCode.from_image_asset("./src/lambdas",
+                                                          cmd=["email_filtering.lambda_handler"]),
+            timeout=Duration.seconds(30),
             memory_size=128,
             environment={
                 "BUCKET_NAME": email_integration_bucket.bucket_name,
@@ -65,10 +70,11 @@ class EmailIntegrationStack(core.Stack):
         email_processing_function = lambda_.DockerImageFunction(
             self,
             "email_processing",
-            function_name=f"email_processing_{core.Aws.ACCOUNT_ID}",
-            code=lambda_.DockerImageCode.from_image_asset("./src/lambdas", cmd=["email_processing.lambda_handler"]),
+            function_name=f"email_processing_{Aws.ACCOUNT_ID}",
+            code=lambda_.DockerImageCode.from_image_asset("./src/lambdas",
+                                                          cmd=["email_processing.lambda_handler"]),
             description="Email processor",
-            timeout=core.Duration.minutes(5),
+            timeout=Duration.minutes(5),
             memory_size=512,
             role=role_glue_lambda,
             environment={
@@ -90,7 +96,7 @@ class EmailIntegrationStack(core.Stack):
         email_integration_bucket.grant_read_write(identity=email_processing_function)
 
         queue_for_quarantine_objects = sqs.Queue(self, "Quarantine_Queue",
-                                                 queue_name=f"Quarantine_Queue_{core.Aws.ACCOUNT_ID}")
+                                                 queue_name=f"Quarantine_Queue_{Aws.ACCOUNT_ID}")
 
         topic_for_quarantine_objects = sns.Topic(self, "Quarantine_Topic",
                                                  display_name="Malformed Email subscription topic"
@@ -114,37 +120,40 @@ class EmailIntegrationStack(core.Stack):
                                                         )
                                                         )
 
-        email_integration_db=glue.Database(self, "emailIntegrationSystemGlueDB",
-                      database_name=GLUE_DATABASE_NAME
-                      )
+        email_integration_db = glue.CfnDatabase(self, "emailIntegrationSystemGlueDB",
+                                                catalog_id=Aws.ACCOUNT_ID,
+                                                database_input=glue.CfnDatabase.DatabaseInputProperty(
+                                                    name=GLUE_DATABASE_NAME)
+                                                )
 
-        lf_db_permissions=lakeformation.CfnPermissions(
+        lf_db_permissions = lakeformation.CfnPermissions(
             self,
             "LakeFormationLambdaRoleOnTheDB",
             data_lake_principal=lakeformation.CfnPermissions.DataLakePrincipalProperty(
                 data_lake_principal_identifier=role_glue_lambda.role_arn),
             resource=lakeformation.CfnPermissions.ResourceProperty(
-                database_resource=lakeformation.CfnPermissions.DatabaseResourceProperty(name=email_integration_db.database_name)
+                database_resource=lakeformation.CfnPermissions.DatabaseResourceProperty(
+                    name=email_integration_db.database_input.name)
             ),
             permissions=["CREATE_TABLE"]
 
         )
-        lf_table_permissions=lakeformation.CfnPermissions(
+        lf_table_permissions = lakeformation.CfnPermissions(
             self,
             "LakeFormationLambdaRoleOnTheDBTables",
             data_lake_principal=lakeformation.CfnPermissions.DataLakePrincipalProperty(
                 data_lake_principal_identifier=role_glue_lambda.role_arn),
             resource=lakeformation.CfnPermissions.ResourceProperty(
-                database_resource=lakeformation.CfnPermissions.DatabaseResourceProperty(name=email_integration_db.database_name),
+                database_resource=lakeformation.CfnPermissions.DatabaseResourceProperty(
+                    name=email_integration_db.database_input.name),
                 table_resource=lakeformation.CfnPermissions.TableResourceProperty(
-                    database_name=email_integration_db.database_name,
+                    database_name=email_integration_db.database_input.name,
                     table_wildcard={},
                 )
             ),
             permissions=["ALL"]
 
         )
-
 
         ses.ReceiptRuleSet(self, "RuleSetSinkToS3",
                            rules=[
